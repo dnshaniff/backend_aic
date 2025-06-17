@@ -13,7 +13,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthenticatedController::class, 'destroy']);
 
     // Users
-    Route::resource('/users', UserController::class)->except('create');
+    Route::resource('/users', UserController::class)->except('create', 'edit');
     Route::post('/users/{user}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::delete('/users/{user}/force', [UserController::class, 'force'])->name('users.force');
 });
