@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Auth;
 
 use Throwable;
 use App\Models\User;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -20,13 +20,21 @@ class UserController extends Controller
             $user = auth()->user();
             $isAdmin = $user->username === 'administrator';
 
-            $query = User::query()->when($isAdmin, fn($q) => $q->withTrashed());
+            $search = $request->input('search');
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
 
-            if ($search = $request->input('search')) {
-                $query->whereRaw('username ILIKE ?', ["%{$search}%"]);
-            }
+            $cacheKey = "users:{$user->username}:search={$search}:page={$page}:perPage={$perPage}";
 
-            $users = $query->latest()->paginate($request->input('per_page', 10));
+            $users = Cache::tags('users')->remember($cacheKey, now()->addMinutes(5), function () use ($isAdmin, $search, $perPage) {
+                $query = User::query()->when($isAdmin, fn($q) => $q->withTrashed());
+
+                if ($search) {
+                    $query->whereRaw('username ILIKE ?', ["%{$search}%"]);
+                }
+
+                return $query->latest()->paginate($perPage);
+            });
 
             return UserResource::collection($users);
         } catch (Throwable $e) {
@@ -48,10 +56,9 @@ class UserController extends Controller
             $data['password'] = Hash::make($data['password']);
             $user = User::create($data);
 
-            return response()->json([
-                'message' => 'User created successfully',
-                'data' => new UserResource($user)
-            ], 201);
+            Cache::tags('users')->flush();
+
+            return response()->json(['message' => 'User created successfully', 'data' => new UserResource($user)], 201);
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
@@ -93,10 +100,9 @@ class UserController extends Controller
 
             $user->update($data);
 
-            return response()->json([
-                'message' => 'User updated successfully',
-                'data' => new UserResource($user)
-            ]);
+            Cache::tags('users')->flush();
+
+            return response()->json(['message' => 'User updated successfully', 'data' => new UserResource($user)], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'User not found'], 404);
         } catch (ValidationException $e) {
@@ -117,6 +123,8 @@ class UserController extends Controller
 
             $user->delete();
 
+            Cache::tags('users')->flush();
+
             return response()->json(['message' => 'User deleted successfully'], 200);
         } catch (Throwable $e) {
             return response()->json(['message' => 'Failed to delete user', 'error' => $e->getMessage()], 500);
@@ -133,6 +141,9 @@ class UserController extends Controller
             }
 
             $user->restore();
+
+            Cache::tags('users')->flush();
+
             return response()->json(['message' => 'User restored successfully']);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'User not found'], 404);
@@ -151,6 +162,9 @@ class UserController extends Controller
             }
 
             $user->forceDelete();
+
+            Cache::tags('users')->flush();
+
             return response()->json(['message' => 'User permanently deleted successfully']);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'User not found'], 404);
