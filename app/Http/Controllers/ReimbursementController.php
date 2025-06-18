@@ -41,4 +41,14 @@ class ReimbursementController extends Controller
     {
         //
     }
+
+    public function submit(string $id)
+    {
+        //
+    }
+
+    public function approval(string $id)
+    {
+        //
+    }
 }
