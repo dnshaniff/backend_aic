@@ -155,7 +155,7 @@ class EmployeeController extends Controller
             $employee = Employee::withTrashed()->findOrFail($id);
 
             if (! $employee->trashed()) {
-                return response()->json(['message' => 'must be soft-deleted first'], 400);
+                return response()->json(['message' => 'Employee must be soft-deleted first'], 400);
             }
 
             $employee->forceDelete();

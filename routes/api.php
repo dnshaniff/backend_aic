@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedController;
 use App\Http\Controllers\Auth\PermissionController;
 use App\Http\Controllers\Auth\RoleController;
 use App\Http\Controllers\Auth\UserController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\EmployeeController;
 
 // Authenticated User: Login
@@ -30,4 +31,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::resource('/employees', EmployeeController::class)->except('create', 'edit');
     Route::post('/employees/{employee}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
     Route::delete('/employees/{employee}/force', [EmployeeController::class, 'force'])->name('employees.force');
+
+    // Categories
+    Route::resource('/categories', CategoryController::class)->except('create', 'edit');
+    Route::post('/categories/{category}/restore', [CategoryController::class, 'restore'])->name('categories.restore');
+    Route::delete('/categories/{category}/force', [CategoryController::class, 'force'])->name('categories.force');
 });
