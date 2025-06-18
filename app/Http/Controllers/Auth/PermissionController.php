@@ -102,11 +102,7 @@ class PermissionController extends Controller
     public function destroy(string $id)
     {
         try {
-            $permission = Permission::withTrashed()->findOrFail($id);
-
-            if ($permission->trashed()) {
-                return response()->json(['message' => 'Permission already deleted'], 400);
-            }
+            $permission = Permission::findOrFail($id);
 
             $permission->delete();
 
