@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Auth;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,8 +18,9 @@ class RoleResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'guard_name' => $this->guard_name,
+            'permissions' => $this->permissions->pluck('name'),
             'created_at' => $this->created_at->format('d F Y, H:i'),
-            'updated_at' => $this->updated_at->format('d F Y, H:i')
+            'updated_at' => $this->updated_at->format('d F Y, H:i'),
         ];
     }
 }

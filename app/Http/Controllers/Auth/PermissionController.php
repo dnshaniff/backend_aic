@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
-use App\Http\Resources\PermissionResource;
+use App\Http\Resources\Auth\PermissionResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 
@@ -58,6 +58,8 @@ class PermissionController extends Controller
             return response()->json(['message' => 'Permission created successfully', 'data' => new PermissionResource($permission)], 201);
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Validation failed', 'errors' => $e->getMessage()], 422);
+        } catch (Throwable $e) {
+            return response()->json(['message' => 'Failed to retrieve permission', 'error' => $e->getMessage()], 500);
         }
     }
 

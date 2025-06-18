@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedController;
 use App\Http\Controllers\Auth\PermissionController;
+use App\Http\Controllers\Auth\RoleController;
 use App\Http\Controllers\Auth\UserController;
 
 // Authenticated User: Login
@@ -20,4 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Permissions
     Route::resource('/permissions', PermissionController::class)->except('create', 'edit');
+
+    // Roles
+    Route::resource('/roles', RoleController::class)->except('create', 'edit');
 });
