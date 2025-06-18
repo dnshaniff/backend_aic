@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use Throwable;
 use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Auth\UserResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Resources\Auth\UserResource;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -46,15 +47,24 @@ class UserController extends Controller
     {
         try {
             $data = $request->validate([
-                'employee_id' => 'nullable|uuid',
-                'username' => 'required|string|unique:users,username',
+                'employee_id' => 'required|uuid|exists:employees,id',
                 'password' => 'required|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z]).+$/',
                 'password_confirmation' => 'required|same:password',
-                'status' => 'required|in:active,inactive'
+                'role' => 'required|string|exists:roles,name',
             ]);
 
-            $data['password'] = Hash::make($data['password']);
-            $user = User::create($data);
+            $employee = Employee::findOrFail($data['employee_id']);
+            $username = strtolower(str_replace(' ', '', $employee->nik));
+
+            $user = User::create([
+                'employee_id' => $employee->id,
+                'username' => $username,
+                'password' => Hash::make($data['password']),
+                'status' => 'active',
+            ]);
+
+            $user->assignRole($data['role']);
+            $user->load(['employee', 'roles']);
 
             Cache::tags('users')->flush();
 
@@ -85,20 +95,27 @@ class UserController extends Controller
             $user = User::findOrFail($id);
 
             $data = $request->validate([
-                'employee_id' => 'nullable|uuid',
-                'username' => 'required|string|unique:users,username,' . $user->id,
+                'employee_id' => 'required|string|exists:employees,id',
                 'password' => 'nullable|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z]).+$/',
                 'password_confirmation' => 'required_with:password|same:password',
-                'status' => 'required|in:active,inactive'
+                'status' => 'required|in:active,inactive',
+                'role' => 'required|string|exists:roles,name',
             ]);
 
-            if (isset($data['password'])) {
-                $data['password'] = Hash::make($data['password']);
-            } else {
-                unset($data['password']);
+            $updateData = [
+                'employee_id' => $data['employee_id'],
+                'status' => $data['status'],
+            ];
+
+            if (!empty($data['password'])) {
+                $updateData['password'] = Hash::make($data['password']);
             }
 
-            $user->update($data);
+            $user->update($updateData);
+
+            $user->syncRoles([$data['role']]);
+
+            $user->load(['employee', 'roles']);
 
             Cache::tags('users')->flush();
 
@@ -169,7 +186,7 @@ class UserController extends Controller
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'User not found'], 404);
         } catch (Throwable $e) {
-            return response()->json(['message' => 'Failed to permanently delete user.', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to permanently delete user', 'error' => $e->getMessage()], 500);
         }
     }
 }

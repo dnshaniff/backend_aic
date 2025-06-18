@@ -12,7 +12,7 @@ class LoginTest extends TestCase
 
     public function test_login_successful_with_valid_credentials()
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'username' => 'testuser',
             'password' => bcrypt('password'),
             'status' => 'active',
@@ -29,7 +29,7 @@ class LoginTest extends TestCase
 
     public function test_login_fails_with_wrong_password()
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'username' => 'testuser',
             'password' => bcrypt('password'),
             'status' => 'active',
@@ -45,7 +45,7 @@ class LoginTest extends TestCase
 
     public function test_login_fails_with_inactive_user()
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'username' => 'testuser',
             'password' => bcrypt('password'),
             'status' => 'inactive'

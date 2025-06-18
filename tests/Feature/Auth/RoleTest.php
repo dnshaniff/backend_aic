@@ -20,7 +20,7 @@ class RoleTest extends TestCase
     {
         parent::setUp();
 
-        $user = User::factory()->create([
+        User::factory()->create([
             'username' => 'adminuser',
             'password' => Hash::make('Password1'),
             'status' => 'active',

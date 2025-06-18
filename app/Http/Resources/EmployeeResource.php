@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources\Auth;
+namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class EmployeeResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,16 +16,13 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'employee_id' => $this->employee_id,
-            'employee' => $this->employee ? [
-                'id' => $this->employee->id,
-                'nik' => $this->employee->nik,
-                'full_name' => $this->employee->full_name,
-                'position' => $this->employee->position
+            'nik' => $this->nik,
+            'full_name' => $this->full_name,
+            'position' => $this->position,
+            'user' => $this->user ? [
+                'username' => $this->user->username,
+                'status' => $this->user->status
             ] : null,
-            'role' => $this->roles->first()?->name,
-            'username' => $this->username,
-            'status' => $this->status,
             'created_at' => $this->created_at->format('d F Y, H:i'),
             'updated_at' => $this->updated_at->format('d F Y, H:i'),
             'deleted_at' => $this->deleted_at ? $this->deleted_at->format('d F Y, H:i') : null,

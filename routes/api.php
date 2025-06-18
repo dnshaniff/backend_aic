@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedController;
 use App\Http\Controllers\Auth\PermissionController;
 use App\Http\Controllers\Auth\RoleController;
 use App\Http\Controllers\Auth\UserController;
+use App\Http\Controllers\EmployeeController;
 
 // Authenticated User: Login
 Route::post('/login', [AuthenticatedController::class, 'store']);
@@ -24,4 +25,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Roles
     Route::resource('/roles', RoleController::class)->except('create', 'edit');
+
+    // Employees
+    Route::resource('/employees', EmployeeController::class)->except('create', 'edit');
+    Route::post('/employees/{employee}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
+    Route::delete('/employees/{employee}/force', [EmployeeController::class, 'force'])->name('employees.force');
 });

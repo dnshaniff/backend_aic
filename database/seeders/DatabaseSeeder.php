@@ -19,11 +19,13 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'username' => '2019148',
             'password' => Hash::make('Netmaster2022'),
+            'status' => 'active'
         ]);
 
         User::factory()->create([
             'username' => 'administrator',
             'password' => Hash::make('P@ssw0rd'),
+            'status' => 'active'
         ]);
     }
 }

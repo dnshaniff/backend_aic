@@ -4,8 +4,10 @@ namespace Tests\Feature\Auth;
 
 use Tests\TestCase;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\Employee;
+use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserTest extends TestCase
 {
@@ -17,7 +19,12 @@ class UserTest extends TestCase
     {
         parent::setUp();
 
-        $user = User::factory()->create([
+        Role::create([
+            'name' => 'administrator',
+            'guard_name' => 'sanctum',
+        ]);
+
+        User::factory()->create([
             'username' => 'adminuser',
             'password' => Hash::make('Password1'),
             'status' => 'active',
@@ -55,19 +62,38 @@ class UserTest extends TestCase
         ]);
     }
 
-    public function test_store_user()
+    public function test_store_user_with_employee_id_and_roles()
     {
-        $response = $this->postJson('/api/users', [
-            'username' => 'newuser',
+        $employee = Employee::create([
+            'nik' => 'EMP100',
+            'full_name' => 'User With Role',
+            'position' => 'Developer'
+        ]);
+
+        $data = [
+            'employee_id' => $employee->id,
             'password' => 'Password1',
             'password_confirmation' => 'Password1',
-            'status' => 'active',
-        ], [
+            'role' => 'administrator',
+        ];
+
+        $response = $this->postJson('/api/users', $data, [
             'Authorization' => 'Bearer ' . $this->token,
         ]);
 
         $response->assertStatus(201);
-        $response->assertJsonFragment(['username' => 'newuser']);
+        $username = strtolower($employee->nik);
+
+        $response->assertJsonFragment([
+            'username' => $username,
+            'status' => 'active',
+            'role' => 'administrator',
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'username' => $username,
+            'employee_id' => $employee->id
+        ]);
     }
 
     public function test_show_user()
@@ -84,20 +110,44 @@ class UserTest extends TestCase
 
     public function test_update_user()
     {
-        $user = User::factory()->create([
-            'username' => 'originaluser',
+        $employee = Employee::create([
+            'nik' => 'EMP123',
+            'full_name' => 'Original Employee',
+            'position' => 'Analyst',
+        ]);
+
+        $user = User::create([
+            'employee_id' => $employee->id,
+            'username' => strtolower($employee->nik),
+            'password' => Hash::make('Password1'),
             'status' => 'active',
         ]);
 
-        $response = $this->putJson("/api/users/{$user->id}", [
-            'username' => 'updateduser',
+        Role::create(['name' => 'manager', 'guard_name' => 'sanctum']);
+
+        $data = [
+            'employee_id' => $employee->id,
             'status' => 'inactive',
-        ], [
+            'role' => 'manager',
+            'password' => 'NewPassword1',
+            'password_confirmation' => 'NewPassword1',
+        ];
+
+        $response = $this->putJson("/api/users/{$user->id}", $data, [
             'Authorization' => 'Bearer ' . $this->token,
         ]);
 
         $response->assertStatus(200);
-        $response->assertJsonFragment(['username' => 'updateduser']);
+        $response->assertJsonFragment([
+            'status' => 'inactive',
+            'role' => 'manager',
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'status' => 'inactive',
+            'employee_id' => $employee->id,
+        ]);
     }
 
     public function test_delete_user()
