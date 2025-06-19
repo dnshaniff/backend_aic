@@ -66,6 +66,7 @@ class UserTest extends TestCase
     {
         $employee = Employee::create([
             'nik' => 'EMP100',
+            'email' => 'user@example.com',
             'full_name' => 'User With Role',
             'position' => 'Developer'
         ]);
@@ -112,6 +113,7 @@ class UserTest extends TestCase
     {
         $employee = Employee::create([
             'nik' => 'EMP123',
+            'email' => 'original@example.com',
             'full_name' => 'Original Employee',
             'position' => 'Analyst',
         ]);

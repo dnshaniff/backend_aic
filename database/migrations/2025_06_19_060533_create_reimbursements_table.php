@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('reimbursements', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->string('reimbursement_number')->unique();
             $table->foreignId('category_id')->constrained('categories', 'id')->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();

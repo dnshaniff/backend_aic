@@ -37,6 +37,7 @@ class EmployeeTest extends TestCase
     {
         Employee::create([
             'nik' => 'EMP001',
+            'email' => 'alpha@example.com',
             'full_name' => 'Alpha',
             'position' => 'Staff'
         ]);
@@ -52,6 +53,7 @@ class EmployeeTest extends TestCase
     {
         $data = [
             'nik' => 'EMP001',
+            'email' => 'john@example.com',
             'full_name' => 'John Doe',
             'position' => 'Manager',
         ];
@@ -70,6 +72,7 @@ class EmployeeTest extends TestCase
     {
         $employee = Employee::create([
             'nik' => 'EMP002',
+            'email' => 'jane@example.com',
             'full_name' => 'Jane Doe',
             'position' => 'Staff'
         ]);
@@ -86,6 +89,7 @@ class EmployeeTest extends TestCase
     {
         $employee = Employee::create([
             'nik' => 'EMP003',
+            'email' => 'jane@example.com',
             'full_name' => 'Jane Doe',
             'position' => 'Staff'
         ]);
@@ -99,6 +103,7 @@ class EmployeeTest extends TestCase
 
         $data = [
             'nik' => 'EMPUPDATED',
+            'email' => 'jane.updated@example.com',
             'full_name' => 'Jane Smith',
             'position' => 'Supervisor',
         ];
@@ -112,6 +117,7 @@ class EmployeeTest extends TestCase
 
         $this->assertDatabaseHas('employees', [
             'id' => $employee->id,
+            'email' => 'jane.updated@example.com',
             'full_name' => 'Jane Smith',
             'nik' => 'EMPUPDATED',
         ]);
@@ -126,6 +132,7 @@ class EmployeeTest extends TestCase
     {
         $employee = Employee::create([
             'nik' => 'EMP004',
+            'email' => 'mark@example.com',
             'full_name' => 'Mark Test',
             'position' => 'Intern'
         ]);
@@ -144,6 +151,7 @@ class EmployeeTest extends TestCase
     {
         $employee = Employee::create([
             'nik' => 'EMP005',
+            'email' => 'soft.deleted@example.com',
             'full_name' => 'Soft Deleted',
             'position' => 'Staff'
         ]);
@@ -163,6 +171,7 @@ class EmployeeTest extends TestCase
     {
         $employee = Employee::create([
             'nik' => 'EMP006',
+            'email' => 'force.deleted@example.com',
             'full_name' => 'Force Delete',
             'position' => 'Staff'
         ]);

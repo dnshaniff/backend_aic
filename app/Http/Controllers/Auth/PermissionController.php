@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
 use App\Http\Resources\Auth\PermissionResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PermissionController extends Controller
@@ -44,6 +45,8 @@ class PermissionController extends Controller
 
     public function store(Request $request)
     {
+        DB::beginTransaction();
+
         try {
             $data = $request->validate([
                 'display_name' => 'required|string',
@@ -52,13 +55,16 @@ class PermissionController extends Controller
             ]);
 
             $permission = Permission::create($data);
+            DB::commit();
 
             Cache::tags('permissions')->flush();
 
             return response()->json(['message' => 'Permission created successfully', 'data' => new PermissionResource($permission)], 201);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->getMessage()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to retrieve permission', 'error' => $e->getMessage()], 500);
         }
     }
@@ -78,6 +84,8 @@ class PermissionController extends Controller
 
     public function update(Request $request, string $id)
     {
+        DB::beginTransaction();
+
         try {
             $permission = Permission::findOrFail($id);
 
@@ -88,30 +96,37 @@ class PermissionController extends Controller
             ]);
 
             $permission->update($data);
+            DB::commit();
 
             Cache::tags('permissions')->flush();
 
             return response()->json(['message' => 'Permission updated successfully', 'data' => new PermissionResource($permission)], 200);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Permission not found'], 404);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to update permission', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function destroy(string $id)
     {
+        DB::beginTransaction();
         try {
             $permission = Permission::findOrFail($id);
 
             $permission->delete();
+            DB::commit();
 
             Cache::tags('permissions')->flush();
 
             return response()->json(['message' => 'Permission deleted successfully'], 200);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to delete permission', 'error' => $e->getMessage()], 500);
         }
     }

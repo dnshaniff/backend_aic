@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Http\Resources\EmployeeResource;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
@@ -44,21 +45,28 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
+        DB::beginTransaction();
+
         try {
             $data = $request->validate([
                 'nik' => 'required|string|unique:employees,nik',
+                'email' => 'required|email|unique:employees,email',
                 'full_name' => 'required|string',
                 'position' => 'required|string'
             ]);
 
             $employee = Employee::create($data);
 
+            DB::commit();
+
             Cache::tags('employees')->flush();
 
             return response()->json(['message' => 'Employee created successfully', 'data' => new EmployeeResource($employee)], 200);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to create employee', 'error' => $e->getMessage()], 500);
         }
     }
@@ -78,11 +86,14 @@ class EmployeeController extends Controller
 
     public function update(Request $request, string $id)
     {
+        DB::beginTransaction();
+
         try {
             $employee = Employee::findOrFail($id);
 
             $data = $request->validate([
                 'nik' => 'required|string|unique:employees,nik,' . $employee->id,
+                'email' => 'required|email|unique:employees,email,' . $employee->id,
                 'full_name' => 'required|string',
                 'position' => 'required|string'
             ]);
@@ -90,6 +101,8 @@ class EmployeeController extends Controller
             $nikChanged = $data['nik'] !== $employee->nik;
 
             $employee->update($data);
+
+            DB::commit();
 
             if ($nikChanged && $employee->user) {
                 $employee->user->update([
@@ -101,16 +114,21 @@ class EmployeeController extends Controller
 
             return response()->json(['message' => 'Employee updated successfully', 'data' => new EmployeeResource($employee)], 200);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Employee not found'], 404);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to update employee', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function destroy(string $id)
     {
+        DB::beginTransaction();
+
         try {
             $employee = Employee::findOrFail($id);
 
@@ -120,16 +138,21 @@ class EmployeeController extends Controller
 
             $employee->delete();
 
+            DB::commit();
+
             Cache::tags('employees')->flush();
 
             return response()->json(['message' => 'Employee deleted successfully'], 200);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to delete employee', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function restore(string $id)
     {
+        DB::beginTransaction();
+
         try {
             $employee = Employee::withTrashed()->findOrFail($id);
 
@@ -139,18 +162,24 @@ class EmployeeController extends Controller
 
             $employee->restore();
 
+            DB::commit();
+
             Cache::tags('employees')->flush();
 
             return response()->json(['message' => 'Employee restored successfully']);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Employee not found'], 404);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to restore employee', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function force(string $id)
     {
+        DB::beginTransaction();
+
         try {
             $employee = Employee::withTrashed()->findOrFail($id);
 
@@ -160,12 +189,16 @@ class EmployeeController extends Controller
 
             $employee->forceDelete();
 
+            DB::commit();
+
             Cache::tags('employees')->flush();
 
             return response()->json(['message' => 'Employee permanently deleted successfully']);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Employee not found'], 404);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to permanently delete employee', 'error' => $e->getMessage()], 500);
         }
     }

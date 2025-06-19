@@ -13,6 +13,7 @@ class Reimbursement extends Model
     protected $table = 'reimbursements';
 
     protected $fillable = [
+        'reimbursement_number',
         'category_id',
         'title',
         'description',

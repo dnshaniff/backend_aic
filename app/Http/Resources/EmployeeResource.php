@@ -17,6 +17,7 @@ class EmployeeResource extends JsonResource
         return [
             'id' => $this->id,
             'nik' => $this->nik,
+            'email' => $this->email,
             'full_name' => $this->full_name,
             'position' => $this->position,
             'user' => $this->user ? [
@@ -25,7 +26,7 @@ class EmployeeResource extends JsonResource
             ] : null,
             'created_at' => $this->created_at->format('d F Y, H:i'),
             'updated_at' => $this->updated_at->format('d F Y, H:i'),
-            'deleted_at' => $this->deleted_at ? $this->deleted_at->format('d F Y, H:i') : null,
+            'deleted_at' => optional($this->deleted_at)?->format('d F Y, H:i'),
         ];
     }
 }

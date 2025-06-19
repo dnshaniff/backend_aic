@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('employees', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('nik')->unique();
+            $table->string('email')->unique();
             $table->string('full_name');
             $table->string('position');
             $table->timestamps();

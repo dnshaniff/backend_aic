@@ -20,7 +20,7 @@ class CategoryResource extends JsonResource
             'limit_per_month' => $this->limit_per_month,
             'created_at' => $this->created_at->format('d F Y, H:i'),
             'updated_at' => $this->updated_at->format('d F Y, H:i'),
-            'deleted_at' => $this->deleted_at ? $this->deleted_at->format('d F Y, H:i') : null,
+            'deleted_at' => optional($this->deleted_at)?->format('d F Y, H:i'),
         ];
     }
 }

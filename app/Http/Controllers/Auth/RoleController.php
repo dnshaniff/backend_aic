@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Http\Resources\Auth\RoleResource;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 class RoleController extends Controller
 {
@@ -42,6 +43,8 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
+        DB::beginTransaction();
+
         try {
             $data = $request->validate([
                 'name' => 'required|string|unique:roles,name',
@@ -50,13 +53,16 @@ class RoleController extends Controller
 
             $role = Role::create(['name' => $data['name']]);
             $role->syncPermissions($data['permissions']);
+            DB::commit();
 
             Cache::tags('roles')->flush();
 
             return response()->json(['message' => 'Role created successfully', 'data' => new RoleResource($role)], 201);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->getMessage()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to retrieve role', 'error' => $e->getMessage()], 500);
         }
     }
@@ -76,6 +82,8 @@ class RoleController extends Controller
 
     public function update(Request $request, string $id)
     {
+        DB::beginTransaction();
+
         try {
             $role = Role::findOrFail($id);
 
@@ -86,30 +94,38 @@ class RoleController extends Controller
 
             $role->update(['name' => $data['name']]);
             $role->syncPermissions($data['permissions']);
+            DB::commit();
 
             Cache::tags('roles')->flush();
 
             return response()->json(['message' => 'Role updated successfully', 'data' => new RoleResource($role)], 201);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Role not found'], 404);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->getMessage()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to update role', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function destroy(string $id)
     {
+        DB::beginTransaction();
+
         try {
             $role = Role::findOrFail($id);
 
             $role->delete();
+            DB::commit();
 
             Cache::tags('roles')->flush();
 
             return response()->json(['message' => 'Role deleted successfully'], 200);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to delete role', 'error' => $e->getMessage()], 500);
         }
     }

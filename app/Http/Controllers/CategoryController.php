@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Http\Resources\CategoryResource;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
 {
@@ -42,6 +43,8 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
+        DB::beginTransaction();
+
         try {
             $data = $request->validate([
                 'category_name' => 'required|string|unique:categories,category_name',
@@ -50,12 +53,16 @@ class CategoryController extends Controller
 
             $category = Category::create($data);
 
+            DB::commit();
+
             Cache::tags('categories')->flush();
 
             return response()->json(['message' => 'Category created successfully', 'data' => new CategoryResource($category)], 200);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to create category', 'error' => $e->getMessage()], 500);
         }
     }
@@ -75,6 +82,8 @@ class CategoryController extends Controller
 
     public function update(Request $request, string $id)
     {
+        DB::beginTransaction();
+
         try {
             $category = Category::findOrFail($id);
 
@@ -85,20 +94,27 @@ class CategoryController extends Controller
 
             $category->update($data);
 
+            DB::commit();
+
             Cache::tags('categories')->flush();
 
             return response()->json(['message' => 'Category updated successfully', 'data' => new CategoryResource($category)], 200);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Category not found'], 404);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to update category', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function destroy(string $id)
     {
+        DB::beginTransaction();
+
         try {
             $category = Category::findOrFail($id);
 
@@ -108,16 +124,21 @@ class CategoryController extends Controller
 
             $category->delete();
 
+            DB::commit();
+
             Cache::tags('categories')->flush();
 
             return response()->json(['message' => 'Category deleted successfully'], 200);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to delete category', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function restore(string $id)
     {
+        DB::beginTransaction();
+
         try {
             $category = Category::withTrashed()->findOrFail($id);
 
@@ -127,18 +148,24 @@ class CategoryController extends Controller
 
             $category->restore();
 
+            DB::commit();
+
             Cache::tags('categories')->flush();
 
             return response()->json(['message' => 'Category restored successfully']);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Category not found'], 404);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to restore category', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function force(string $id)
     {
+        DB::beginTransaction();
+
         try {
             $category = Category::withTrashed()->findOrFail($id);
 
@@ -148,12 +175,16 @@ class CategoryController extends Controller
 
             $category->forceDelete();
 
+            DB::commit();
+
             Cache::tags('categories')->flush();
 
             return response()->json(['message' => 'Category permanently deleted successfully']);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Category not found'], 404);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to permanently delete category', 'error' => $e->getMessage()], 500);
         }
     }

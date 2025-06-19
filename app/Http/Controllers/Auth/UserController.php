@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Http\Resources\Auth\UserResource;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -45,6 +46,8 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        DB::beginTransaction();
+
         try {
             $data = $request->validate([
                 'employee_id' => 'required|uuid|exists:employees,id',
@@ -64,14 +67,19 @@ class UserController extends Controller
             ]);
 
             $user->assignRole($data['role']);
+
+            DB::commit();
+
             $user->load(['employee', 'roles']);
 
             Cache::tags('users')->flush();
 
             return response()->json(['message' => 'User created successfully', 'data' => new UserResource($user)], 201);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to create user', 'error' => $e->getMessage()], 500);
         }
     }
@@ -91,6 +99,8 @@ class UserController extends Controller
 
     public function update(Request $request, string $id)
     {
+        DB::beginTransaction();
+
         try {
             $user = User::findOrFail($id);
 
@@ -115,22 +125,29 @@ class UserController extends Controller
 
             $user->syncRoles([$data['role']]);
 
+            DB::commit();
+
             $user->load(['employee', 'roles']);
 
             Cache::tags('users')->flush();
 
             return response()->json(['message' => 'User updated successfully', 'data' => new UserResource($user)], 200);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'User not found'], 404);
         } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to update user', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function destroy(string $id)
     {
+        DB::beginTransaction();
+
         try {
             $user = User::withTrashed()->findOrFail($id);
 
@@ -140,10 +157,13 @@ class UserController extends Controller
 
             $user->delete();
 
+            DB::commit();
+
             Cache::tags('users')->flush();
 
             return response()->json(['message' => 'User deleted successfully'], 200);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to delete user', 'error' => $e->getMessage()], 500);
         }
     }
@@ -159,12 +179,16 @@ class UserController extends Controller
 
             $user->restore();
 
+            DB::commit();
+
             Cache::tags('users')->flush();
 
             return response()->json(['message' => 'User restored successfully']);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'User not found'], 404);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to restore user', 'error' => $e->getMessage()], 500);
         }
     }
@@ -180,12 +204,16 @@ class UserController extends Controller
 
             $user->forceDelete();
 
+            DB::commit();
+
             Cache::tags('users')->flush();
 
             return response()->json(['message' => 'User permanently deleted successfully']);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'User not found'], 404);
         } catch (Throwable $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Failed to permanently delete user', 'error' => $e->getMessage()], 500);
         }
     }
