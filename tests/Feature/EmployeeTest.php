@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -24,6 +25,16 @@ class EmployeeTest extends TestCase
             'password' => Hash::make('Password1'),
             'status' => 'active',
         ]);
+
+        Permission::create(['display_name' => 'View Employees', 'name' => 'employees.index', 'group_name' => 'Employees', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Create Employee', 'name' => 'employees.store', 'group_name' => 'Employees', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'View Employee Detail', 'name' => 'employees.show', 'group_name' => 'Employees', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Update Employee', 'name' => 'employees.update', 'group_name' => 'Employees', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Delete Employee', 'name' => 'employees.destroy', 'group_name' => 'Employees', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Restore Employee', 'name' => 'employees.restore', 'group_name' => 'Employees', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Force Delete Employee', 'name' => 'employees.force', 'group_name' => 'Employees', 'guard_name' => 'sanctum']);
+
+        $user->givePermissionTo(Permission::all());
 
         $response = $this->postJson('/api/login', [
             'username' => 'adminuser',

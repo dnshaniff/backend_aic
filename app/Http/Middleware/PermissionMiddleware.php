@@ -13,7 +13,7 @@ class PermissionMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, $permission = null, $guard = null)
+    public function handle(Request $request, Closure $next, $permission = null, $guard = 'sanctum')
     {
         $authGuard = app('auth')->guard($guard);
 
@@ -21,20 +21,26 @@ class PermissionMiddleware
             throw UnauthorizedException::notLoggedIn();
         }
 
+        $user = $authGuard->user();
+
         if (! is_null($permission)) {
-            $permission = is_array($permission) ? $permission : explode('|', $permission);
+            $permissions = is_array($permission) ? $permission : explode('|', $permission);
+        } else {
+            $routeName = $request->route()->getName();
+
+            if (! $routeName) {
+                abort(403, 'Unauthorized: route name not defined.');
+            }
+
+            $permissions = [$routeName];
         }
 
-        if (is_null($permission)) {
-            $permission = $request->route()->getName();
-            $permissions = array($permission);
-        }
-
-        foreach ($permissions as $permission) {
-            if ($authGuard->user()->can($permission)) {
+        foreach ($permissions as $perm) {
+            if ($user->can($perm)) {
                 return $next($request);
             }
         }
+
         throw UnauthorizedException::forPermissions($permissions);
     }
 }

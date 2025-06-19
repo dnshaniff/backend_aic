@@ -14,18 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(15)->create();
-
-        User::factory()->create([
-            'username' => '2019148',
-            'password' => Hash::make('Netmaster2022'),
-            'status' => 'active'
-        ]);
-
-        User::factory()->create([
-            'username' => 'administrator',
-            'password' => Hash::make('P@ssw0rd'),
-            'status' => 'active'
+        $this->call([
+            PermissionSeeder::class,
+            RoleSeeder::class,
+            UserSeeder::class,
+            CategorySeeder::class,
         ]);
     }
 }

@@ -19,11 +19,19 @@ class PermissionTest extends TestCase
     {
         parent::setUp();
 
-        User::factory()->create([
+        $user = User::factory()->create([
             'username' => 'adminuser',
             'password' => Hash::make('Password1'),
             'status' => 'active',
         ]);
+
+        Permission::create(['display_name' => 'View Permissions', 'name' => 'permissions.index', 'group_name' => 'Permissions', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Create Permission', 'name' => 'permissions.store', 'group_name' => 'Permissions', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'View Permission Detail', 'name' => 'permissions.show', 'group_name' => 'Permissions', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Update Permission', 'name' => 'permissions.update', 'group_name' => 'Permissions', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Delete Permission', 'name' => 'permissions.destroy', 'group_name' => 'Permissions', 'guard_name' => 'sanctum']);
+
+        $user->givePermissionTo(Permission::all());
 
         $response = $this->postJson('/api/login', [
             'username' => 'adminuser',

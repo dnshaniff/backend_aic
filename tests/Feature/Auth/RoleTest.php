@@ -20,11 +20,19 @@ class RoleTest extends TestCase
     {
         parent::setUp();
 
-        User::factory()->create([
+        $user = User::factory()->create([
             'username' => 'adminuser',
             'password' => Hash::make('Password1'),
             'status' => 'active',
         ]);
+
+        Permission::create(['display_name' => 'View Roles', 'name' => 'roles.index', 'group_name' => 'Roles', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Create Role', 'name' => 'roles.store', 'group_name' => 'Roles', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'View Role Detail', 'name' => 'roles.show', 'group_name' => 'Roles', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Update Role', 'name' => 'roles.update', 'group_name' => 'Roles', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Delete Role', 'name' => 'roles.destroy', 'group_name' => 'Roles', 'guard_name' => 'sanctum']);
+
+        $user->givePermissionTo(Permission::all());
 
         $response = $this->postJson('/api/login', [
             'username' => 'adminuser',

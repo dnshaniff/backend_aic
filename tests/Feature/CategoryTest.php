@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Category;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -24,6 +25,16 @@ class CategoryTest extends TestCase
             'password' => Hash::make('Password1'),
             'status' => 'active',
         ]);
+
+        Permission::create(['display_name' => 'View Categories', 'name' => 'categories.index', 'group_name' => 'Categories', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Create Category', 'name' => 'categories.store', 'group_name' => 'Categories', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'View Category Detail', 'name' => 'categories.show', 'group_name' => 'Categories', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Update Category', 'name' => 'categories.update', 'group_name' => 'Categories', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Delete Category', 'name' => 'categories.destroy', 'group_name' => 'Categories', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Restore Category', 'name' => 'categories.restore', 'group_name' => 'Categories', 'guard_name' => 'sanctum']);
+        Permission::create(['display_name' => 'Force Delete Category', 'name' => 'categories.force', 'group_name' => 'Categories', 'guard_name' => 'sanctum']);
+
+        $user->givePermissionTo(Permission::all());
 
         $response = $this->postJson('/api/login', [
             'username' => 'adminuser',
